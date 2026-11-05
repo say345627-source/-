@@ -35,6 +35,20 @@ jobs:
         with:
           gradle-version: "9.3.1"
 
+      # The app's existing debugConfig expects this file at the repository root.
+      # Create it only on the CI runner; do not change the app's signing configuration.
+      - name: Create CI debug keystore
+        run: |
+          keytool -genkeypair -v \
+            -keystore debug.keystore \
+            -storepass android \
+            -alias androiddebugkey \
+            -keypass android \
+            -keyalg RSA \
+            -keysize 2048 \
+            -validity 10000 \
+            -dname "CN=Android Debug,O=Android,C=US"
+
       - name: Build debug APK
         run: gradle --no-daemon assembleDebug
 
