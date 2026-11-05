@@ -1,4 +1,4 @@
-name: Android Debug APK
+name: Android APKs (Debug + Release performance test)
 
 on:
   push:
@@ -10,7 +10,7 @@ permissions:
 
 jobs:
   build:
-    name: Build debug APK
+    name: Build debug and release APKs
     runs-on: ubuntu-latest
     steps:
       - name: Checkout source
@@ -35,8 +35,7 @@ jobs:
         with:
           gradle-version: "9.3.1"
 
-      # The app's existing debugConfig expects this file at the repository root.
-      # Create it only on the CI runner; do not change the app's signing configuration.
+      # Keep the project's existing debug signing configuration unchanged.
       - name: Create CI debug keystore
         run: |
           keytool -genkeypair -v \
@@ -57,5 +56,34 @@ jobs:
         with:
           name: app-debug.apk
           path: app/build/outputs/apk/debug/*.apk
+          if-no-files-found: error
+          retention-days: 14
+
+      # Temporary CI-only signing key for a performance-comparison release build.
+      # The app's Gradle signing configuration and application source remain untouched.
+      - name: Create temporary release keystore
+        run: |
+          keytool -genkeypair -v \
+            -keystore ci-release-test.jks \
+            -storepass ci-test-password \
+            -alias upload \
+            -keypass ci-test-password \
+            -keyalg RSA \
+            -keysize 2048 \
+            -validity 10000 \
+            -dname "CN=CI Performance Test,O=Temporary,C=US"
+
+      - name: Build release APK for performance comparison
+        env:
+          KEYSTORE_PATH: ${{ github.workspace }}/ci-release-test.jks
+          STORE_PASSWORD: ci-test-password
+          KEY_PASSWORD: ci-test-password
+        run: gradle --no-daemon assembleRelease
+
+      - name: Upload release test APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-release-performance-test.apk
+          path: app/build/outputs/apk/release/*.apk
           if-no-files-found: error
           retention-days: 14
