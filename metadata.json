@@ -1,0 +1,6 @@
+{
+  "name": "سُنَن",
+  "description": "مساعد ذكي للسنن والأفكار النبوية مع أدلتها وتخريجها وتتبع تطبيقها",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
